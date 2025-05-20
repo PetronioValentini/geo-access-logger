@@ -11,7 +11,7 @@ from pymongo.errors import ConnectionFailure, OperationFailure
 
 # Configuração inicial
 st.set_page_config(
-    page_title="Fazenda - Notas Fiscais Eletrônicas",
+    page_title="Hospital Vaz Monteiro - Notas Fiscais Eletrônicas",
     initial_sidebar_state="expanded"
 )
 
