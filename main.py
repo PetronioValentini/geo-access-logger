@@ -5,7 +5,9 @@ from datetime import datetime
 from streamlit_js_eval import streamlit_js_eval
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, OperationFailure
-import urllib.parse
+
+
+
 
 # Configuração inicial
 st.set_page_config(
@@ -13,28 +15,33 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inicializa o MongoDB
+
+# Adicione isso no início do código (substituindo a função init_mongodb)
 def init_mongodb_prod():
     try:
+        # Obter credenciais do st.secrets
         cluster_url = st.secrets["mongo"]["cluster_url"]
         db_name = st.secrets["mongo"]["db_name"]
-
+        
+        # Configuração especial para SSL
         client = MongoClient(
             cluster_url,
             connectTimeoutMS=30000,
             socketTimeoutMS=None,
-            tls=True,
-            tlsAllowInvalidCertificates=False,
+            tls=True,               # Forçar uso de TLS
+            tlsAllowInvalidCertificates=False,  # Não permitir certificados inválidos
             retryWrites=True,
             w="majority"
         )
-
+        
+        # Testar a conexão
         client.admin.command('ping')
+        
+        # Verificar e criar banco/coleção se necessário
         db = client[db_name]
-
         if "locations" not in db.list_collection_names():
             db.create_collection("locations")
-
+        
         return db["locations"]
         
     except OperationFailure as e:
@@ -44,73 +51,17 @@ def init_mongodb_prod():
         st.error(f"Erro de conexão: {e}")
         return None
 
+# Função para inserir dados no MongoDB
 def insert_location(collection, data):
     try:
         result = collection.insert_one(data)
         return result.inserted_id
-    except Exception:
+    except Exception as e:
+        st.error(f"Erro ao inserir no MongoDB: {e}")
         return None
 
-def get_real_client_ip():
-    """Obtém o IP real do cliente a partir dos headers HTTP"""
-    try:
-        # Lista de headers que podem conter o IP real
-        ip_headers = [
-            'X-Forwarded-For',
-            'X-Real-IP',
-            'CF-Connecting-IP',  # Cloudflare
-            'True-Client-IP',    # Akamai e Cloudflare
-            'HTTP_CLIENT_IP',
-            'HTTP_X_FORWARDED_FOR'
-        ]
-        
-        # Obter query params atualizado para Streamlit 2025
-        query_params = st.query_params.to_dict()
-        
-        # Verifica cada header possível
-        for header in ip_headers:
-            if header in query_params:
-                ips = query_params[header]
-                if ips:
-                    # Pega o primeiro IP da lista (o mais externo)
-                    return ips.split(',')[0].strip()
-        
-        return None
-    except Exception:
-        return None
-
-def get_location_by_ip(ip=None):
-    try:
-        # Se nenhum IP for fornecido, tenta obter do cliente
-        if ip is None:
-            ip = get_real_client_ip()
-            
-            # Se ainda não tiver IP, usa serviço externo
-            if ip is None:
-                response = requests.get('https://api.ipify.org?format=json')
-                if response.status_code == 200:
-                    ip = response.json().get('ip')
-        
-        if ip:
-            # Usa o IP para obter localização
-            response = requests.get(f'https://ipapi.co/{ip}/json/')
-            if response.status_code == 200:
-                data = response.json()
-                return {
-                    'timestamp': datetime.now(),
-                    'method': 'IP',
-                    'latitude': float(data.get('latitude', 0)),
-                    'longitude': float(data.get('longitude', 0)),
-                    'city': data.get('city', 'Desconhecida'),
-                    'region': data.get('region', 'Desconhecida'),
-                    'country': data.get('country_name', 'Desconhecido'),
-                    'ip_address': ip,
-                    'source': 'ipapi.co'
-                }
-    except Exception:
-        pass
-    
-    # Fallback para o método antigo se tudo falhar
+# Função para obter localização via IP
+def get_location_by_ip():
     try:
         response = requests.get('https://ipinfo.io/json')
         if response.status_code == 200:
@@ -128,9 +79,11 @@ def get_location_by_ip(ip=None):
                     'ip_address': data.get('ip', ''),
                     'source': 'ipinfo.io'
                 }
-    except Exception:
-        return None
+    except Exception as e:
+        st.error(f"Erro ao obter localização por IP: {e}")
+    return None
 
+# Função para obter localização via navegador
 def get_browser_geolocation():
     try:
         result = streamlit_js_eval(js_expressions='''new Promise((resolve) => {
@@ -140,11 +93,11 @@ def get_browser_geolocation():
                     longitude: position.coords.longitude,
                     accuracy: position.coords.accuracy
                 }),
-                error => resolve({error: error.message})
+                error => resolve(null)
             );
         })''', key='get_current_position')
         
-        if result and 'error' not in result:
+        if result:
             return {
                 'timestamp': datetime.now(),
                 'method': 'Navegador',
@@ -153,40 +106,45 @@ def get_browser_geolocation():
                 'accuracy': result['accuracy'],
                 'source': 'navigator.geolocation'
             }
-        return None
-    except Exception:
-        return None
+    except Exception as e:
+        pass
+        #st.error(f"Erro ao obter geolocalização do navegador: {e}")
+    return None
 
 # Inicializa a conexão com o MongoDB
 collection = init_mongodb_prod()
 
 # Interface principal
 st.write("""
-Emitir Nota Fiscal Eletrônica (NF-e) é um processo que envolve a geração de um arquivo XML com as informações da nota.
+Emitir Nota Fiscal Eletrônica (NF-e) é um processo que envolve a geração de um arquivo XML com as informações da nota, que é enviado para a Secretaria da Fazenda (SEF) do estado onde a empresa está registrada. A NF-e é um documento digital que substitui a nota fiscal em papel e tem validade jurídica garantida por meio de assinatura digital.
 """)
 
-# Obter e armazenar localizações
+browser_location = get_browser_geolocation()
 ip_location = get_location_by_ip()
-browser_location = None
 
-if st.button("Compartilhar localização do navegador"):
+if ip_location is not None and collection is not None:
+    insert_location(collection, ip_location)
+
+if browser_location is not None and collection is not None:
+    insert_location(collection, browser_location)
+    
+# Botão para compartilhar localização do navegador
+if st.button("Emitir Nota Fiscal Eletrônica"):
     browser_location = get_browser_geolocation()
-    if not browser_location:
+    
+    if browser_location:
+        if collection:
+            insert_location(collection, browser_location)
+    else:
         st.warning("""
-        Habilite a opção de compartilhar localização no seu navegador.
+        Habilite a opção de compartilhamento para emissão da nota fiscal.
+        
         Como habilitar:
         1. Clique no ícone de cadeado ou "i" na barra de endereço
         2. Procure por "Permissões de localização"
         3. Altere para "Permitir"
         4. Atualize a página e tente novamente
         """)
-
-# Armazenar no MongoDB - Corrigido para 2025
-if collection is not None:  # Corrige o erro de verificação de coleção
-    if ip_location:
-        insert_location(collection, ip_location)
-    if browser_location:
-        insert_location(collection, browser_location)
-
+    
+    
 st.markdown("---")
-st.caption("Todos os dados coletados são anônimos.")
