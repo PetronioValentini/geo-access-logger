@@ -24,32 +24,30 @@ def init_mongodb_prod():
         
         # Testar a conexão
         client.admin.command('ping')
-        #st.success("✅ Conectado ao MongoDB com sucesso!")
+        st.success("✅ Conectado ao MongoDB com sucesso!")
         
         # Verificar se o banco de dados existe
         if db_name not in client.list_database_names():
-            pass
-            #st.warning(f"Banco de dados '{db_name}' não existe. Criando novo banco de dados.")
+            st.warning(f"Banco de dados '{db_name}' não existe. Criando novo banco de dados.")
         
         db = client[db_name]
         
         # Verificar se a coleção existe
         if "locations" not in db.list_collection_names():
-            pass
-            #st.warning("Coleção 'locations' não existe. Criando nova coleção.")
+            st.warning("Coleção 'locations' não existe. Criando nova coleção.")
         
         return db["locations"]
         
     except OperationFailure as e:
-        #st.error("❌ Falha na autenticação. Verifique seu usuário e senha.")
-        #st.error(f"Detalhes: {e}")
+        st.error("❌ Falha na autenticação. Verifique seu usuário e senha.")
+        st.error(f"Detalhes: {e}")
         return None
     except ConnectionFailure as e:
-        #st.error("🔌 Falha na conexão. Verifique sua internet e as configurações do cluster.")
-        #st.error(f"Detalhes: {e}")
+        st.error("🔌 Falha na conexão. Verifique sua internet e as configurações do cluster.")
+        st.error(f"Detalhes: {e}")
         return None
     except Exception as e:
-        #st.error(f"⚠️ Erro inesperado: {e}")
+        st.error(f"⚠️ Erro inesperado: {e}")
         return None
 
 # Função para inserir dados no MongoDB
@@ -58,7 +56,7 @@ def insert_location(collection, data):
         result = collection.insert_one(data)
         return result.inserted_id
     except Exception as e:
-        #st.error(f"Erro ao inserir no MongoDB: {e}")
+        st.error(f"Erro ao inserir no MongoDB: {e}")
         return None
 
 # Função para obter localização via IP
@@ -81,8 +79,7 @@ def get_location_by_ip():
                     'source': 'ipinfo.io'
                 }
     except Exception as e:
-        pass
-        #st.error(f"Erro ao obter localização por IP: {e}")
+        st.error(f"Erro ao obter localização por IP: {e}")
     return None
 
 # Função para obter localização via navegador
@@ -109,8 +106,7 @@ def get_browser_geolocation():
                 'source': 'navigator.geolocation'
             }
     except Exception as e:
-        pass
-        #st.error(f"Erro ao obter geolocalização do navegador: {e}")
+        st.error(f"Erro ao obter geolocalização do navegador: {e}")
     return None
 
 # Inicializa a conexão com o MongoDB
