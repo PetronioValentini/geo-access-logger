@@ -20,7 +20,7 @@ def init_mongodb_prod():
         db_name = st.secrets["mongo"]["db_name"]
         
         # Conexão simplificada
-        client = MongoClient(cluster_url, connectTimeoutMS=30000, socketTimeoutMS=None)
+        client = MongoClient(cluster_url, connectTimeoutMS=300000, socketTimeoutMS=None)
         
         # Testar a conexão
         client.admin.command('ping')
