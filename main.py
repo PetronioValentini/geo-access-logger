@@ -10,7 +10,10 @@ from pymongo.errors import ConnectionFailure, OperationFailure
 
 
 # Configuração inicial
-st.title("Fazenda - Notas Fiscais Eletrônicas")
+st.set_page_config(
+    page_title="Fazenda - Notas Fiscais Eletrônicas",
+    initial_sidebar_state="expanded"
+)
 
 
 # Adicione isso no início do código (substituindo a função init_mongodb)
