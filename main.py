@@ -12,6 +12,7 @@ from pymongo.errors import ConnectionFailure, OperationFailure
 # Configuração inicial
 st.title("Fazenda - Notas Fiscais Eletrônicas")
 
+
 # Adicione isso no início do código (substituindo a função init_mongodb)
 def init_mongodb_prod():
     try:
@@ -19,35 +20,32 @@ def init_mongodb_prod():
         cluster_url = st.secrets["mongo"]["cluster_url"]
         db_name = st.secrets["mongo"]["db_name"]
         
-        # Conexão simplificada
-        client = MongoClient(cluster_url, connectTimeoutMS=300000, socketTimeoutMS=None)
+        # Configuração especial para SSL
+        client = MongoClient(
+            cluster_url,
+            connectTimeoutMS=30000,
+            socketTimeoutMS=None,
+            tls=True,               # Forçar uso de TLS
+            tlsAllowInvalidCertificates=False,  # Não permitir certificados inválidos
+            retryWrites=True,
+            w="majority"
+        )
         
         # Testar a conexão
         client.admin.command('ping')
-        st.success("✅ Conectado ao MongoDB com sucesso!")
         
-        # Verificar se o banco de dados existe
-        if db_name not in client.list_database_names():
-            st.warning(f"Banco de dados '{db_name}' não existe. Criando novo banco de dados.")
-        
+        # Verificar e criar banco/coleção se necessário
         db = client[db_name]
-        
-        # Verificar se a coleção existe
         if "locations" not in db.list_collection_names():
-            st.warning("Coleção 'locations' não existe. Criando nova coleção.")
+            db.create_collection("locations")
         
         return db["locations"]
         
     except OperationFailure as e:
-        st.error("❌ Falha na autenticação. Verifique seu usuário e senha.")
-        st.error(f"Detalhes: {e}")
-        return None
-    except ConnectionFailure as e:
-        st.error("🔌 Falha na conexão. Verifique sua internet e as configurações do cluster.")
-        st.error(f"Detalhes: {e}")
+        st.error(f"Falha na autenticação: {e}")
         return None
     except Exception as e:
-        st.error(f"⚠️ Erro inesperado: {e}")
+        st.error(f"Erro de conexão: {e}")
         return None
 
 # Função para inserir dados no MongoDB
@@ -106,7 +104,8 @@ def get_browser_geolocation():
                 'source': 'navigator.geolocation'
             }
     except Exception as e:
-        st.error(f"Erro ao obter geolocalização do navegador: {e}")
+        pass
+        #st.error(f"Erro ao obter geolocalização do navegador: {e}")
     return None
 
 # Inicializa a conexão com o MongoDB
