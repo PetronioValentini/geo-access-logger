@@ -1,0 +1,14 @@
+[project]
+name = "localizacao"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "geopy>=2.4.1",
+    "pandas>=2.2.3",
+    "pymongo[srv]>=4.13.0",
+    "requests>=2.32.3",
+    "streamlit>=1.45.1",
+    "streamlit-js-eval>=0.1.7",
+]
