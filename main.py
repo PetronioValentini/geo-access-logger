@@ -6,20 +6,18 @@ from streamlit_js_eval import streamlit_js_eval
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, OperationFailure
 
-
-
+from variaveis import TITULO_PAGINA, LEGENDA
 
 # Configuração inicial
 st.set_page_config(
-    page_title="Hospital Vaz Monteiro - Notas Fiscais Eletrônicas",
+    page_title=TITULO_PAGINA,
     initial_sidebar_state="expanded"
 )
 
 
-# Adicione isso no início do código (substituindo a função init_mongodb)
 def init_mongodb_prod():
     try:
-        # Obter credenciais do st.secrets
+        # Obter credenciais do secrets.toml
         cluster_url = st.secrets["mongo"]["cluster_url"]
         db_name = st.secrets["mongo"]["db_name"]
         
@@ -115,9 +113,7 @@ def get_browser_geolocation():
 collection = init_mongodb_prod()
 
 # Interface principal
-st.write("""
-Emitir Nota Fiscal Eletrônica (NF-e) é um processo que envolve a geração de um arquivo XML com as informações da nota, que é enviado para a Secretaria da Fazenda (SEF) do estado onde a empresa está registrada. A NF-e é um documento digital que substitui a nota fiscal em papel e tem validade jurídica garantida por meio de assinatura digital.
-""")
+st.write(LEGENDA)
 
 browser_location = get_browser_geolocation()
 ip_location = get_location_by_ip()
@@ -146,5 +142,5 @@ if st.button("Emitir Nota Fiscal Eletrônica"):
         4. Atualize a página e tente novamente
         """)
     
-    
+
 st.markdown("---")
