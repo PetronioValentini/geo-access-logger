@@ -1,55 +1,56 @@
 # 📍 Geo Access Logger
 
-**Geo Access Logger** é uma aplicação web simples construída com **Streamlit**, projetada para **capturar e registrar dados de geolocalização de usuários**. O sistema combina informações do navegador (com permissão do usuário) e localização por IP (usando o serviço [ipinfo.io](https://ipinfo.io)).
+**Geo Access Logger** is a simple web application built with **Streamlit**, designed to **capture and log user geolocation data**. The system combines browser-based location (with user permission) and IP-based geolocation using the [ipinfo.io](https://ipinfo.io) service.
 
-Este projeto foi desenvolvido com **fins educacionais**, como demonstração de técnicas de geolocalização via navegador e serviços externos em aplicações web.
-
----
-
-## 🌐 Funcionalidades
-
-- 📌 Captura de geolocalização do navegador (via `navigator.geolocation`) **requer permissão do usuário**
-- 🌍 Captura de localização com base no IP usando [ipinfo.io](https://ipinfo.io)
-- ☁️ Armazenamento seguro dos dados em banco **MongoDB Atlas**
-- 🧾 Simulação de uso real: botão fictício para "Emitir Nota Fiscal Eletrônica", acionando a geolocalização
+This project was developed **for educational purposes**, as a demonstration of geolocation techniques using the browser and external services in web applications.
 
 ---
 
-## ⚙️ Requisitos
+## 🌐 Features
 
-- Conta no [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-- Arquivo `.streamlit/secrets.toml` configurado (veja abaixo)
-- Dependências listadas no `pyproject.toml`
-- Gerenciador de pacotes [uv](https://github.com/astral-sh/uv)
+- 📌 Geolocation capture using the browser (via `navigator.geolocation`) — **requires user permission**
+- 🌍 Location capture based on IP address using [ipinfo.io](https://ipinfo.io)
+- ☁️ Secure storage of location data in a **MongoDB Atlas** database
+- 🧾 Realistic simulation: a fake "Emit Electronic Invoice" button triggers geolocation collection
 
 ---
 
-## 🚀 Instalação
+## ⚙️ Requirements
+
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account
+- Properly configured `.streamlit/secrets.toml` file (see below)
+- Dependencies listed in `pyproject.toml`
+- [uv](https://github.com/astral-sh/uv) package manager
+
+---
+
+## 🚀 Installation
 
 ```bash
-# 1. Clone este repositório
+# 1. Clone this repository
 git clone https://github.com/PetronioValentini/geo-access-logger.git
 cd geo-access-logger
 
-# 2. Instale as dependências
+# 2. Install dependencies
 uv sync
 
-# 3. Configure o arquivo de credenciais
+# 3. Configure MongoDB credentials in the secrets file
 # .streamlit/secrets.toml
 [mongo]
-cluster_url = "mongodb+srv://<usuario>:<senha>@<cluster>.mongodb.net/?retryWrites=true&w=majority"
-db_name = "nome_do_banco"
+cluster_url = "mongodb+srv://<username>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority"
+db_name = "your_database_name"
 
-# 4. Edite as variáveis no arquivo variaveis.py
-# TITULO_PAGINA = "Seu título personalizado"
-# LEGENDA = "Descrição da simulação de NF-e..."
+# 4. Edit variables in variaveis.py
+# TITULO_PAGINA = "Your custom page title"
+# LEGENDA = "Description of the NF-e simulation..."
 
-# 5. Rode a aplicação localmente
+# 5. Run the application locally
 uv run streamlit run main.py
 
-# 6. Envie para cloud com streamlit cloud
+# 6. Deploy using Streamlit Cloud
 
-# 7. Utilize o site "https://grabify.org/br/ip-grabber/" para encurtar e armazenar o IP do visitante
+# 7. (Optional) Use "https://grabify.org/" to shorten and track access to the app
+
 
 ```
 
